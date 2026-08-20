@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IncluiPlay - jogos acessíveis</title>
+    <meta
+      name="description"
+      content="Site local com três jogos acessíveis para pessoas cegas, com baixa visão e daltônicas."
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo principal</a>
+
+    <header class="site-header">
+      <div>
+        <p class="eyebrow">Site local acessível</p>
+        <h1>IncluiPlay</h1>
+        <p class="intro">
+          Três minigames feitos para funcionar com teclado,
+          leitor de tela, alto contraste e sem depender apenas de cores.
+        </p>
+      </div>
+
+      <section class="quick-panel" aria-labelledby="ajustes-titulo">
+        <h2 id="ajustes-titulo">Ajustes rápidos</h2>
+        <div class="control-row">
+          <label for="tema">Tema visual</label>
+          <select id="tema">
+            <option value="alto">Alto contraste</option>
+            <option value="claro" selected>Claro com contraste</option>
+            <option value="protanopia">Amigável para daltonismo</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="tamanho">Tamanho do texto</label>
+          <input id="tamanho" type="range" min="18" max="26" value="20">
+        </div>
+        <div class="control-row">
+          <label for="voz">Voz em português</label>
+          <select id="voz">
+            <option value="">Carregando vozes...</option>
+          </select>
+        </div>
+        <button type="button" id="btn-fala">Ativar ou testar voz</button>
+        <div class="assistant-panel" aria-labelledby="assistente-titulo">
+          <h3 id="assistente-titulo">Assistente por voz</h3>
+          <p id="assistente-status" role="status" aria-live="polite">
+            Diga ajuda, ler página, jogo um, aumentar texto ou alto contraste.
+          </p>
+          <div class="assistant-actions">
+            <button type="button" id="btn-ouvir">Falar comando</button>
+            <button type="button" id="btn-ajuda-voz">Ouvir ajuda</button>
+          </div>
+        </div>
+      </section>
+    </header>
+
+    <main id="conteudo" class="layout">
+      <nav class="tabs" aria-label="Escolha um jogo">
+        <button class="tab is-active" type="button" data-view="numero" aria-controls="numero" aria-selected="true">
+          Jogo 1
+        </button>
+        <button class="tab" type="button" data-view="memoria" aria-controls="memoria" aria-selected="false">
+          Jogo 2
+        </button>
+        <button class="tab" type="button" data-view="orientacao" aria-controls="orientacao" aria-selected="false">
+          Jogo 3
+        </button>
+      </nav>
+
+      <section id="numero" class="view is-visible" aria-labelledby="numero-titulo">
+        <div class="section-head">
+          <p class="eyebrow">Jogo 1</p>
+          <h2 id="numero-titulo" tabindex="-1">Número falado</h2>
+          <p>
+            O site fala um número de 1 a 9. Escolha o número correto usando
+            os botões ou o teclado numérico.
+          </p>
+        </div>
+
+        <div class="game-bar">
+          <button type="button" id="novo-numero">Falar número</button>
+          <button type="button" id="repetir-numero">Repetir número</button>
+          <p id="placar-numero">Acertos: 0. Erros: 0.</p>
+        </div>
+
+        <div class="number-grid" role="group" aria-label="Escolhas de número">
+          <button type="button" class="number-btn" data-number="1">1</button>
+          <button type="button" class="number-btn" data-number="2">2</button>
+          <button type="button" class="number-btn" data-number="3">3</button>
+          <button type="button" class="number-btn" data-number="4">4</button>
+          <button type="button" class="number-btn" data-number="5">5</button>
+          <button type="button" class="number-btn" data-number="6">6</button>
+          <button type="button" class="number-btn" data-number="7">7</button>
+          <button type="button" class="number-btn" data-number="8">8</button>
+          <button type="button" class="number-btn" data-number="9">9</button>
+        </div>
+
+        <div class="status-box" role="status" aria-live="assertive" id="status-numero">
+          Pressione falar número para começar.
+        </div>
+      </section>
+
+      <section id="memoria" class="view" aria-labelledby="memoria-titulo" hidden>
+        <div class="section-head">
+          <p class="eyebrow">Jogo 2</p>
+          <h2 id="memoria-titulo" tabindex="-1">Memória sonora</h2>
+          <p>
+            Escute a sequência e repita usando os botões ou as teclas 1, 2, 3 e 4.
+            Cada botão tem nome, número e som diferente.
+          </p>
+        </div>
+
+        <div class="game-bar">
+          <button type="button" id="iniciar-memoria">Iniciar rodada</button>
+          <button type="button" id="repetir-sequencia">Repetir sequência</button>
+          <p id="placar-memoria">Rodada 0. Melhor resultado: 0.</p>
+        </div>
+
+        <div class="sound-grid" role="group" aria-label="Botões da memória sonora">
+          <button type="button" class="sound-pad" data-pad="0" aria-label="Som 1, sino grave">1<br><span>Sino grave</span></button>
+          <button type="button" class="sound-pad" data-pad="1" aria-label="Som 2, toque medio">2<br><span>Toque medio</span></button>
+          <button type="button" class="sound-pad" data-pad="2" aria-label="Som 3, pulso agudo">3<br><span>Pulso agudo</span></button>
+          <button type="button" class="sound-pad" data-pad="3" aria-label="Som 4, eco curto">4<br><span>Eco curto</span></button>
+        </div>
+
+        <div class="status-box" role="status" aria-live="assertive" id="status-memoria">
+          Pressione iniciar rodada para jogar.
+        </div>
+      </section>
+
+      <section id="orientacao" class="view" aria-labelledby="orientacao-titulo" hidden>
+        <div class="section-head">
+          <p class="eyebrow">Jogo 3</p>
+          <h2 id="orientacao-titulo" tabindex="-1">Rota segura</h2>
+          <p>
+            O jogo anuncia uma direção. Escolha a mesma direção com os botões
+            ou com as setas do teclado. Não há pistas apenas por cor.
+          </p>
+        </div>
+
+        <div class="game-bar">
+          <button type="button" id="nova-rota">Nova direção</button>
+          <p id="placar-rota">Acertos: 0. Erros: 0.</p>
+        </div>
+
+        <div class="direction-board" role="group" aria-label="Escolhas de direção">
+          <button type="button" class="dir-btn up" data-dir="cima">Cima</button>
+          <button type="button" class="dir-btn left" data-dir="esquerda">Esquerda</button>
+          <button type="button" class="dir-btn right" data-dir="direita">Direita</button>
+          <button type="button" class="dir-btn down" data-dir="baixo">Baixo</button>
+        </div>
+
+        <div class="status-box" role="status" aria-live="assertive" id="status-rota">
+          Pressione nova direção para começar.
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Dica: todos os jogos podem ser usados por teclado. Os jogos anunciam
+        resultados para leitor de tela e também mostram texto visível.
+      </p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
