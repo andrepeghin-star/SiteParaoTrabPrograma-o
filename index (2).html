@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IncluiPlay - Jogos Acessíveis</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo principal</a>
+
+    <div class="app-container">
+      <div class="main-column">
+        <header class="site-header">
+          <p class="eyebrow">Site local acessível</p>
+          <h1>IncluiPlay</h1>
+          <p class="intro">
+            Três minigames feitos para funcionar com teclado, leitor de tela, alto contraste e áudio.
+          </p>
+        </header>
+
+        <main id="conteudo">
+          <nav class="tabs" aria-label="Navegação de jogos">
+            <button class="tab is-active" type="button" data-view="numero" aria-selected="true">Jogo 1: Números</button>
+            <button class="tab" type="button" data-view="memoria" aria-selected="false">Jogo 2: Memória</button>
+            <button class="tab" type="button" data-view="orientacao" aria-selected="false">Jogo 3: Direção</button>
+            <button class="tab" type="button" data-view="acessibilidade" aria-selected="false">Teste Auditivo</button>
+            <button class="tab" type="button" data-view="apresentacao" aria-selected="false">Sobre</button>
+          </nav>
+
+          <section id="numero" class="view is-visible" aria-labelledby="numero-titulo">
+            <div class="section-head">
+              <h2 id="numero-titulo" tabindex="-1">Número Falado</h2>
+              <p>Escute o número sorteado de 1 a 9 e pressione o botão correto.</p>
+            </div>
+            <div class="game-bar">
+              <button type="button" id="novo-numero">Falar número</button>
+              <button type="button" id="repetir-numero">Repetir número</button>
+              <p id="placar-numero">Acertos: 0 | Erros: 0</p>
+            </div>
+            <div class="number-grid">
+              <button type="button" class="number-btn" data-number="1">1</button>
+              <button type="button" class="number-btn" data-number="2">2</button>
+              <button type="button" class="number-btn" data-number="3">3</button>
+              <button type="button" class="number-btn" data-number="4">4</button>
+              <button type="button" class="number-btn" data-number="5">5</button>
+              <button type="button" class="number-btn" data-number="6">6</button>
+              <button type="button" class="number-btn" data-number="7">7</button>
+              <button type="button" class="number-btn" data-number="8">8</button>
+              <button type="button" class="number-btn" data-number="9">9</button>
+            </div>
+            <div class="status-box" id="status-numero" role="status">Clique em "Falar número" para começar.</div>
+          </section>
+
+          <section id="memoria" class="view" aria-labelledby="memoria-titulo" hidden>
+            <div class="section-head">
+              <h2 id="memoria-titulo" tabindex="-1">Memória Sonora</h2>
+              <p>Escute a sequência de sons e repita utilizando as teclas 1, 2, 3 e 4.</p>
+            </div>
+            <div class="game-bar">
+              <button type="button" id="iniciar-memoria">Iniciar Rodada</button>
+              <button type="button" id="repetir-sequencia">Repetir Sequência</button>
+              <p id="placar-memoria">Rodada: 0 | Recorde: 0</p>
+            </div>
+            <div class="sound-grid">
+              <button type="button" class="sound-pad" data-pad="0">1<br><span>Sino grave</span></button>
+              <button type="button" class="sound-pad" data-pad="1">2<br><span>Toque médio</span></button>
+              <button type="button" class="sound-pad" data-pad="2">3<br><span>Pulso agudo</span></button>
+              <button type="button" class="sound-pad" data-pad="3">4<br><span>Eco curto</span></button>
+            </div>
+            <div class="status-box" id="status-memoria" role="status">Clique em "Iniciar Rodada" para jogar.</div>
+          </section>
+
+          <section id="orientacao" class="view" aria-labelledby="orientacao-titulo" hidden>
+            <div class="section-head">
+              <h2 id="orientacao-titulo" tabindex="-1">Rota Segura</h2>
+              <p>Ouça a direção anunciada e selecione o botão correto ou use as setas do teclado.</p>
+            </div>
+            <div class="game-bar">
+              <button type="button" id="nova-rota">Nova Direção</button>
+              <p id="placar-rota">Acertos: 0 | Erros: 0</p>
+            </div>
+            <div class="direction-board">
+              <button type="button" class="dir-btn" data-dir="cima">Cima</button>
+              <button type="button" class="dir-btn" data-dir="esquerda">Esquerda</button>
+              <button type="button" class="dir-btn" data-dir="direita">Direita</button>
+              <button type="button" class="dir-btn" data-dir="baixo">Baixo</button>
+            </div>
+            <div class="status-box" id="status-rota" role="status">Clique em "Nova Direção" para começar.</div>
+          </section>
+
+          <section id="acessibilidade" class="view" aria-labelledby="acessibilidade-titulo" hidden>
+            <div class="section-head">
+              <h2 id="acessibilidade-titulo" tabindex="-1">Teste de Acessibilidade</h2>
+              <p>Verifique o suporte do seu navegador para os recursos acessíveis.</p>
+            </div>
+            <button type="button" id="executar-teste">Executar Diagnóstico</button>
+            <ul class="audit-list">
+              <li id="teste-contraste"><span class="audit-status">Pendente</span><strong>Tema Visual</strong><span>Verificando contraste...</span></li>
+              <li id="teste-teclado"><span class="audit-status">Pendente</span><strong>Teclado</strong><span>Verificando foco...</span></li>
+              <li id="teste-voz"><span class="audit-status">Pendente</span><strong>Síntese de Voz</strong><span>Verificando síntese...</span></li>
+            </ul>
+          </section>
+
+          <section id="apresentacao" class="view" aria-labelledby="apresentacao-titulo" hidden>
+            <div class="section-head">
+              <h2 id="apresentacao-titulo" tabindex="-1">Sobre o IncluiPlay</h2>
+              <p>Plataforma de minigames projetada com foco em acessibilidade universal.</p>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <aside class="sidebar-column">
+        <section class="quick-panel" aria-labelledby="ajustes-titulo">
+          <h2 id="ajustes-titulo">Ajustes Rápidos</h2>
+          
+          <div class="control-row">
+            <label for="tema">Tema visual</label>
+            <select id="tema">
+              <option value="claro">Claro</option>
+              <option value="escuro">Escuro</option>
+              <option value="alto">Alto Contraste</option>
+              <option value="protanopia">Daltonismo</option>
+            </select>
+          </div>
+
+          <div class="control-row">
+            <label for="tamanho">Tamanho do texto</label>
+            <input id="tamanho" type="range" min="16" max="24" value="18">
+          </div>
+
+          <div class="control-row">
+            <label for="voz">Voz do sistema</label>
+            <select id="voz"><option value="">Carregando vozes...</option></select>
+          </div>
+
+          <button type="button" id="btn-fala">Testar Voz</button>
+          <button type="button" id="btn-guia">Ouvir Guia da Tela</button>
+
+          <div class="profile-panel">
+            <h3>Perfis Rápidos</h3>
+            <div class="profile-grid">
+              <button type="button" class="profile-btn" data-profile="baixa-visao">Baixa Visão</button>
+              <button type="button" class="profile-btn" data-profile="daltonismo">Daltonismo</button>
+              <button type="button" class="profile-btn" data-profile="leitor">Leitor de Tela</button>
+              <button type="button" class="profile-btn" data-profile="movimento">Sem Animação</button>
+            </div>
+            <p id="perfil-status">Selecione um perfil rápido.</p>
+          </div>
+
+          <div class="offline-assistant">
+            <h3>Dúvidas Frequentes</h3>
+            <div class="question-list">
+              <button type="button" data-question="texto">Como alterar o texto?</button>
+              <button type="button" data-question="teclado">Como jogar via teclado?</button>
+              <button type="button" data-question="baixa-visao">Melhor jogo para baixa visão?</button>
+            </div>
+            <p id="assistente-resposta" class="assistant-answer" role="status">Selecione uma dúvida acima.</p>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
