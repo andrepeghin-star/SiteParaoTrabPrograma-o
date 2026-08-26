@@ -252,7 +252,101 @@
   profileButtons.forEach((btn) => btn.addEventListener("click", () => applyProfile(btn.dataset.profile)));
   questionButtons.forEach((btn) => btn.addEventListener("click", () => answerOfflineQuestion(btn.dataset.question)));
   if ($("executar-teste")) $("executar-teste").addEventListener("click", runAccessibilityTest);
+// --- LÓGICA DO JOGO 2 (MEMÓRIA SONORA) ---
+  const playSequence = async () => {
+    if (estado.memoria.sequence.length === 0) return;
+    estado.memoria.accepting = false;
+    setStatus("status-memoria", "Ouça a sequência...");
+    for (let i = 0; i < estado.memoria.sequence.length; i++) {
+      const padIndex = estado.memoria.sequence[i];
+      await speak(`${padIndex + 1}`, { interrupt: true });
+      await wait(800);
+    }
+    setStatus("status-memoria", "Sua vez! Repita a sequência.");
+    estado.memoria.input = [];
+    estado.memoria.accepting = true;
+  };
 
+  const iniciarMemoria = () => {
+    estado.memoria.round = 1;
+    estado.memoria.sequence = [randomInt(0, 3)];
+    if ($("placar-memoria")) $("placar-memoria").textContent = `Rodada ${estado.memoria.round}. Melhor resultado: ${estado.memoria.best}.`;
+    playSequence();
+  };
+
+  const checkMemoria = (padIndex) => {
+    if (!estado.memoria.accepting) return;
+    
+    padIndex = Number(padIndex);
+    estado.memoria.input.push(padIndex);
+    const currentStep = estado.memoria.input.length - 1;
+
+    speak(`${padIndex + 1}`, { interrupt: true });
+
+    if (estado.memoria.input[currentStep] !== estado.memoria.sequence[currentStep]) {
+      setStatus("status-memoria", `Incorreto. Fim de jogo na rodada ${estado.memoria.round}.`, "wrong");
+      speak(`Errado. Fim de jogo.`);
+      estado.memoria.accepting = false;
+      return;
+    }
+
+    if (estado.memoria.input.length === estado.memoria.sequence.length) {
+      estado.memoria.accepting = false;
+      estado.memoria.round++;
+      if (estado.memoria.round - 1 > estado.memoria.best) {
+        estado.memoria.best = estado.memoria.round - 1;
+      }
+      if ($("placar-memoria")) $("placar-memoria").textContent = `Rodada ${estado.memoria.round}. Melhor resultado: ${estado.memoria.best}.`;
+      setStatus("status-memoria", "Correto! Preparando próxima sequência...", "correct");
+      speak(`Correto!`);
+      
+      estado.memoria.sequence.push(randomInt(0, 3));
+      setTimeout(playSequence, 2000);
+    }
+  };
+
+  // --- LÓGICA DO JOGO 3 (ROTA SEGURA) ---
+  const direcoes = ["cima", "baixo", "esquerda", "direita"];
+  
+  const novaRota = () => {
+    estado.rota.current = direcoes[randomInt(0, 3)];
+    setStatus("status-rota", `Vá para: ${estado.rota.current}`);
+    speak(`Vá para ${estado.rota.current}`, { interrupt: true });
+  };
+
+  const checkRota = (dir) => {
+    if (!estado.rota.current) {
+      novaRota();
+      return;
+    }
+
+    if (dir === estado.rota.current) {
+      estado.rota.hits++;
+      setStatus("status-rota", "Correto!", "correct");
+      speak("Correto!");
+    } else {
+      estado.rota.misses++;
+      setStatus("status-rota", `Incorreto. Era ${estado.rota.current}.`, "wrong");
+      speak("Errado.");
+    }
+    if ($("placar-rota")) $("placar-rota").textContent = `Acertos: ${estado.rota.hits}. Erros: ${estado.rota.misses}.`;
+    estado.rota.current = null;
+    
+    // Inicia a próxima rota automaticamente após um acerto/erro
+    setTimeout(novaRota, 1500);
+  };
+
+  // --- ATIVANDO OS BOTÕES DOS JOGOS 2 E 3 ---
+  if ($("iniciar-memoria")) $("iniciar-memoria").addEventListener("click", iniciarMemoria);
+  if ($("repetir-sequencia")) $("repetir-sequencia").addEventListener("click", playSequence);
+  document.querySelectorAll(".sound-pad").forEach((btn) =>
+    btn.addEventListener("click", () => checkMemoria(btn.dataset.pad))
+  );
+
+  if ($("nova-rota")) $("nova-rota").addEventListener("click", novaRota);
+  document.querySelectorAll(".dir-btn").forEach((btn) =>
+    btn.addEventListener("click", () => checkRota(btn.dataset.dir))
+  );
   // Inicialização
   if ("speechSynthesis" in window) {
     speechSynthesis.onvoiceschanged = refreshVoices;
