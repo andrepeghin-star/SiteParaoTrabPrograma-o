@@ -162,6 +162,7 @@
     }
   };
 
+  // --- JOGO 1 ---
   const newNumber = () => {
     estado.numero.current = randomInt(1, 9);
     setStatus("status-numero", "Novo número falado. Escolha uma opção.");
@@ -189,70 +190,7 @@
     estado.numero.current = null;
   };
 
-  const runAccessibilityTest = () => {
-    try {
-      const keyboardControls = Array.from(document.querySelectorAll("button, select, input"));
-      const allKeyboardReady = keyboardControls.length > 0 && keyboardControls.every((control) => control.tabIndex >= 0);
-      const images = Array.from(document.images);
-      const allImagesDescribed = images.every((image) => image.hasAttribute("alt"));
-      const screenReaderReady = Boolean(document.documentElement.lang && document.querySelector(".skip-link"));
-      const voiceReady = "speechSynthesis" in window;
-      const themeText = tema?.options[tema.selectedIndex]?.text || tema?.value || "Padrão";
-
-      const setAudit = (id, pass, text) => {
-        const item = $(id);
-        if (!item) return;
-        item.classList.toggle("is-pass", pass);
-        item.classList.toggle("is-attention", !pass);
-        const badge = item.querySelector(".audit-status");
-        if (badge) badge.textContent = pass ? "Pronto" : "Atenção";
-        const desc = item.querySelector("span:last-child");
-        if (desc) desc.textContent = text;
-      };
-
-      setAudit("teste-contraste", true, `Tema ${themeText} aplicado com sucesso.`);
-      setAudit("teste-teclado", allKeyboardReady, `${keyboardControls.length} controles navegáveis via teclado.`);
-      setAudit("teste-alt", allImagesDescribed, images.length ? "Imagens com atributo alt." : "Sem imagens pendentes.");
-      setAudit("teste-voz", voiceReady, voiceReady ? "Síntese de voz suportada." : "Sem suporte a voz neste navegador.");
-      setAudit("teste-leitor", screenReaderReady, "Estrutura semântica configurada.");
-
-      if ($("teste-atualizado")) $("teste-atualizado").textContent = "Verificação concluída.";
-    } catch (e) {
-      console.warn("Aviso ao executar teste de acessibilidade:", e);
-    }
-  };
-
-  const answerOfflineQuestion = (question) => {
-    const answers = {
-      texto: "Use o controle Tamanho do texto no painel para ajustar a fonte.",
-      teclado: "Use a tecla Tab para navegar entre elementos e Enter ou Espaço para interagir.",
-      "baixa-visao": "O jogo Número falado possui texto grande, contraste e sinalização sonora.",
-    };
-    const text = answers[question] || "Resposta indisponível.";
-    if (assistantAnswer) assistantAnswer.textContent = text;
-    speak(text, { interrupt: true });
-  };
-
-  // Event Listeners
-  tabs.forEach((tab) => tab.addEventListener("click", () => activateTab(tab.dataset.view)));
-  if ($("novo-numero")) $("novo-numero").addEventListener("click", newNumber);
-  if ($("repetir-numero")) $("repetir-numero").addEventListener("click", () => {
-    if (estado.numero.current) speak(`Número ${estado.numero.current}`, { interrupt: true });
-    else newNumber();
-  });
-
-  document.querySelectorAll(".number-btn").forEach((btn) =>
-    btn.addEventListener("click", () => checkNumber(btn.dataset.number))
-  );
-
-  if (tema) tema.addEventListener("change", updateTheme);
-  if (tamanho) tamanho.addEventListener("input", updateFontSize);
-  if (btnFala) btnFala.addEventListener("click", () => speak("Acessibilidade e testes de voz ativos.", { interrupt: true }));
-  
-  profileButtons.forEach((btn) => btn.addEventListener("click", () => applyProfile(btn.dataset.profile)));
-  questionButtons.forEach((btn) => btn.addEventListener("click", () => answerOfflineQuestion(btn.dataset.question)));
-  if ($("executar-teste")) $("executar-teste").addEventListener("click", runAccessibilityTest);
-// --- LÓGICA DO JOGO 2 (MEMÓRIA SONORA) ---
+  // --- JOGO 2 ---
   const playSequence = async () => {
     if (estado.memoria.sequence.length === 0) return;
     estado.memoria.accepting = false;
@@ -305,7 +243,7 @@
     }
   };
 
-  // --- LÓGICA DO JOGO 3 (ROTA SEGURA) ---
+  // --- JOGO 3 ---
   const direcoes = ["cima", "baixo", "esquerda", "direita"];
   
   const novaRota = () => {
@@ -332,11 +270,66 @@
     if ($("placar-rota")) $("placar-rota").textContent = `Acertos: ${estado.rota.hits}. Erros: ${estado.rota.misses}.`;
     estado.rota.current = null;
     
-    // Inicia a próxima rota automaticamente após um acerto/erro
     setTimeout(novaRota, 1500);
   };
 
-  // --- ATIVANDO OS BOTÕES DOS JOGOS 2 E 3 ---
+  // --- TESTES DE ACESSIBILIDADE ---
+  const runAccessibilityTest = () => {
+    try {
+      const keyboardControls = Array.from(document.querySelectorAll("button, select, input"));
+      const allKeyboardReady = keyboardControls.length > 0 && keyboardControls.every((control) => control.tabIndex >= 0);
+      const images = Array.from(document.images);
+      const allImagesDescribed = images.every((image) => image.hasAttribute("alt"));
+      const screenReaderReady = Boolean(document.documentElement.lang && document.querySelector(".skip-link"));
+      const voiceReady = "speechSynthesis" in window;
+      const themeText = tema?.options[tema.selectedIndex]?.text || tema?.value || "Padrão";
+
+      const setAudit = (id, pass, text) => {
+        const item = $(id);
+        if (!item) return;
+        item.classList.toggle("is-pass", pass);
+        item.classList.toggle("is-attention", !pass);
+        const badge = item.querySelector(".audit-status");
+        if (badge) badge.textContent = pass ? "Pronto" : "Atenção";
+        const desc = item.querySelector("span:last-child");
+        if (desc) desc.textContent = text;
+      };
+
+      setAudit("teste-contraste", true, `Tema ${themeText} aplicado com sucesso.`);
+      setAudit("teste-teclado", allKeyboardReady, `${keyboardControls.length} controles navegáveis via teclado.`);
+      setAudit("teste-alt", allImagesDescribed, images.length ? "Imagens com atributo alt." : "Sem imagens pendentes.");
+      setAudit("teste-voz", voiceReady, voiceReady ? "Síntese de voz suportada." : "Sem suporte a voz neste navegador.");
+      setAudit("teste-leitor", screenReaderReady, "Estrutura semântica configurada.");
+
+      if ($("teste-atualizado")) $("teste-atualizado").textContent = "Verificação concluída.";
+    } catch (e) {
+      console.warn("Aviso ao executar teste de acessibilidade:", e);
+    }
+  };
+
+  const answerOfflineQuestion = (question) => {
+    const answers = {
+      texto: "Use o controle Tamanho do texto no painel para ajustar a fonte.",
+      teclado: "Use a tecla Tab para navegar entre elementos e Enter ou Espaço para interagir.",
+      "baixa-visao": "O jogo Número falado possui texto grande, contraste e sinalização sonora.",
+    };
+    const text = answers[question] || "Resposta indisponível.";
+    if (assistantAnswer) assistantAnswer.textContent = text;
+    speak(text, { interrupt: true });
+  };
+
+  // --- EVENT LISTENERS GERAIS ---
+  tabs.forEach((tab) => tab.addEventListener("click", () => activateTab(tab.dataset.view)));
+  
+  if ($("novo-numero")) $("novo-numero").addEventListener("click", newNumber);
+  if ($("repetir-numero")) $("repetir-numero").addEventListener("click", () => {
+    if (estado.numero.current) speak(`Número ${estado.numero.current}`, { interrupt: true });
+    else newNumber();
+  });
+  document.querySelectorAll(".number-btn").forEach((btn) =>
+    btn.addEventListener("click", () => checkNumber(btn.dataset.number))
+  );
+
   if ($("iniciar-memoria")) $("iniciar-memoria").addEventListener("click", iniciarMemoria);
   if ($("repetir-sequencia")) $("repetir-sequencia").addEventListener("click", playSequence);
   document.querySelectorAll(".sound-pad").forEach((btn) =>
@@ -347,7 +340,16 @@
   document.querySelectorAll(".dir-btn").forEach((btn) =>
     btn.addEventListener("click", () => checkRota(btn.dataset.dir))
   );
-  // Inicialização
+
+  if (tema) tema.addEventListener("change", updateTheme);
+  if (tamanho) tamanho.addEventListener("input", updateFontSize);
+  if (btnFala) btnFala.addEventListener("click", () => speak("Acessibilidade e testes de voz ativos.", { interrupt: true }));
+  
+  profileButtons.forEach((btn) => btn.addEventListener("click", () => applyProfile(btn.dataset.profile)));
+  questionButtons.forEach((btn) => btn.addEventListener("click", () => answerOfflineQuestion(btn.dataset.question)));
+  if ($("executar-teste")) $("executar-teste").addEventListener("click", runAccessibilityTest);
+
+  // --- INICIALIZAÇÃO ---
   if ("speechSynthesis" in window) {
     speechSynthesis.onvoiceschanged = refreshVoices;
     refreshVoices();
