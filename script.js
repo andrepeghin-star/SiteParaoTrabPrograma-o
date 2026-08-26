@@ -218,10 +218,12 @@
       const padIndex = estado.memoria.sequence[i];
       const som = sonsMemoria[padIndex];
       
-      playTone(som.freq, som.tipo, 400);
-      speak(`${padIndex + 1}`, { interrupt: false }); // Não interrompe a voz anterior
+      playTone(som.freq, som.tipo, 400); // Toca o bipe musical
       
-      await wait(1000); // Dá tempo para o som e a voz terminarem antes do próximo
+      // AQUI ESTÁ A MÁGICA: O 'await' faz ele esperar a voz terminar de falar antes de continuar o loop!
+      await speak(`${padIndex + 1}`, { interrupt: false }); 
+      
+      await wait(300); // Uma pequena pausa de respiro antes do próximo número
     }
     
     setStatus("status-memoria", "Sua vez! Repita a sequência.");
