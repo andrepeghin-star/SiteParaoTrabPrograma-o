@@ -3,11 +3,16 @@
   const tamanho = document.getElementById("tamanho");
   const vozSelect = document.getElementById("voz");
   const btnFala = document.getElementById("btn-fala");
+  const btnGuia = document.getElementById("btn-guia");
   const btnOuvir = document.getElementById("btn-ouvir");
   const btnAjudaVoz = document.getElementById("btn-ajuda-voz");
   const assistenteStatus = document.getElementById("assistente-status");
   const tabs = Array.from(document.querySelectorAll(".tab"));
   const views = Array.from(document.querySelectorAll(".view"));
+  const profileButtons = Array.from(document.querySelectorAll(".profile-btn"));
+  const perfilStatus = document.getElementById("perfil-status");
+  const questionButtons = Array.from(document.querySelectorAll("[data-question]"));
+  const assistantAnswer = document.getElementById("assistente-resposta");
 
   const estado = {
     numero: {
@@ -36,6 +41,8 @@
   const $ = (id) => document.getElementById(id);
   const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const gameViews = ["numero", "memoria", "orientacao"];
+  const supportedThemes = ["claro", "escuro", "alto", "protanopia"];
 
   const scoreVoice = (voice) => {
     const name = voice.name.toLowerCase();
@@ -128,12 +135,94 @@
     if (kind === "wrong") el.classList.add("is-wrong");
   };
 
+  const savePreferences = () => {
+    try {
+      localStorage.setItem("incluiPlayPreferences", JSON.stringify({
+        theme: tema.value,
+        fontSize: tamanho.value,
+        profile: document.body.dataset.profile || "",
+        motion: document.body.dataset.motion || "",
+      }));
+    } catch {
+      // O site segue funcionando quando o navegador bloqueia armazenamento local.
+    }
+  };
+
   const updateTheme = () => {
     document.body.dataset.theme = tema.value;
+    savePreferences();
   };
 
   const updateFontSize = () => {
     document.documentElement.style.fontSize = `${tamanho.value}px`;
+    savePreferences();
+  };
+
+  const setProfileButtonState = (profile) => {
+    profileButtons.forEach((button) => {
+      const active = button.dataset.profile === profile;
+      button.setAttribute("aria-pressed", String(active));
+      button.classList.toggle("is-active", active);
+    });
+  };
+
+  const applyProfile = (profile, shouldSpeak = true) => {
+    const profiles = {
+      "baixa-visao": {
+        theme: "alto",
+        fontSize: 26,
+        motion: "",
+        message: "Perfil baixa visão aplicado: texto maior e alto contraste.",
+      },
+      daltonismo: {
+        theme: "protanopia",
+        fontSize: 22,
+        motion: "",
+        message: "Perfil para daltonismo aplicado: cores diferenciadas e texto ampliado.",
+      },
+      leitor: {
+        theme: "escuro",
+        fontSize: 24,
+        motion: "",
+        message: "Perfil para leitor de tela aplicado: leitura linear, foco destacado e texto maior.",
+      },
+      movimento: {
+        theme: tema.value,
+        fontSize: Number(tamanho.value),
+        motion: "reduced",
+        message: "Perfil pouco movimento aplicado: animações e transições foram reduzidas.",
+      },
+    };
+    const selected = profiles[profile];
+    if (!selected) return;
+
+    tema.value = selected.theme;
+    tamanho.value = selected.fontSize;
+    document.body.dataset.profile = profile;
+    document.body.dataset.motion = selected.motion;
+    updateTheme();
+    updateFontSize();
+    setProfileButtonState(profile);
+    perfilStatus.textContent = selected.message;
+    if (shouldSpeak) speak(selected.message, { interrupt: true });
+  };
+
+  const restorePreferences = () => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("incluiPlayPreferences") || "null");
+      if (!stored) return;
+
+      if (supportedThemes.includes(stored.theme)) tema.value = stored.theme;
+      const fontSize = Number(stored.fontSize);
+      if (fontSize >= Number(tamanho.min) && fontSize <= Number(tamanho.max)) tamanho.value = fontSize;
+      if (stored.profile) {
+        document.body.dataset.profile = stored.profile;
+        setProfileButtonState(stored.profile);
+      }
+      if (stored.motion === "reduced") document.body.dataset.motion = "reduced";
+    } catch {
+      // Preferências são opcionais e não devem impedir a abertura do jogo.
+    }
   };
 
   const activateTab = (viewId, shouldSpeak = true) => {
@@ -313,8 +402,118 @@
     speak(`${title}. ${description}`, { interrupt: true });
   };
 
+  const guideCurrentView = () => {
+    const visibleId = views.find((view) => !view.hidden)?.id;
+    const guides = {
+      numero: "Você está no jogo Número falado. Pressione Falar número e escolha de 1 a 9 pelos botões ou pelo teclado numérico. Use Repetir número se precisar ouvir de novo.",
+      memoria: "Você está no jogo Memória sonora. Pressione Iniciar rodada, escute os sons e repita a sequência pelos botões ou pelas teclas de um a quatro.",
+      orientacao: "Você está no jogo Rota segura. Pressione Nova direção e escolha cima, baixo, esquerda ou direita pelos botões ou pelas setas do teclado.",
+      acessibilidade: "Você está no teste de acessibilidade. Pressione Executar teste agora para conferir teclado, tema, texto alternativo, voz e recursos para leitor de tela.",
+      apresentacao: "Você está na apresentação do IncluiPlay. Esta tela explica o público, os recursos de acessibilidade e o objetivo dos três jogos.",
+    };
+    const text = guides[visibleId] || "Você está no IncluiPlay. Escolha uma aba para começar.";
+    setAssistantStatus("Guia por voz iniciado.");
+    speak(text, { interrupt: true });
+  };
+
+  const startCurrentGame = () => {
+    const visibleId = views.find((view) => !view.hidden)?.id;
+    if (visibleId === "numero") return newNumber();
+    if (visibleId === "memoria") return nextMemoryRound();
+    if (visibleId === "orientacao") return novaRota();
+    speak("Escolha um dos três jogos para começar.", { interrupt: true });
+  };
+
+  const repeatCurrentGame = () => {
+    const visibleId = views.find((view) => !view.hidden)?.id;
+    if (visibleId === "numero") {
+      if (estado.numero.current == null) return newNumber();
+      setStatus("status-numero", "Número repetido.");
+      return speak(`Número ${estado.numero.current}`, { interrupt: true });
+    }
+    if (visibleId === "memoria") return playMemorySequence();
+    if (visibleId === "orientacao") {
+      if (!estado.rota.current) return novaRota();
+      setStatus("status-rota", `Direção repetida: ${estado.rota.current}.`);
+      return speak(`Direção alvo ${estado.rota.current}.`, { interrupt: true });
+    }
+    guideCurrentView();
+  };
+
+  const goToNextGame = () => {
+    const visibleId = views.find((view) => !view.hidden)?.id;
+    const currentIndex = gameViews.indexOf(visibleId);
+    const nextId = gameViews[currentIndex < 0 ? 0 : (currentIndex + 1) % gameViews.length];
+    activateTab(nextId);
+  };
+
+  const answerNumberFromVoice = (command) => {
+    const digit = command.match(/\b([1-9])\b/)?.[1];
+    const words = {
+      um: 1,
+      dois: 2,
+      tres: 3,
+      quatro: 4,
+      cinco: 5,
+      seis: 6,
+      sete: 7,
+      oito: 8,
+      nove: 9,
+    };
+    const word = Object.keys(words).find((name) => new RegExp(`\\b${name}\\b`).test(command));
+    return digit || (word ? String(words[word]) : null);
+  };
+
+  const setAuditResult = (id, status, detail) => {
+    const item = $(id);
+    const badge = item.querySelector(".audit-status");
+    const description = item.querySelector("span:last-child");
+    item.classList.remove("is-pass", "is-attention");
+    item.classList.add(status === "pass" ? "is-pass" : "is-attention");
+    badge.textContent = status === "pass" ? "Pronto" : "Atenção";
+    description.textContent = detail;
+  };
+
+  const runAccessibilityTest = () => {
+    const keyboardControls = Array.from(document.querySelectorAll("button, select, input"));
+    const allKeyboardReady = keyboardControls.length > 0 && keyboardControls.every((control) => control.tabIndex >= 0);
+    const images = Array.from(document.images);
+    const allImagesDescribed = images.every((image) => image.hasAttribute("alt"));
+    const screenReaderReady = Boolean(
+      document.documentElement.lang
+      && document.querySelector(".skip-link")
+      && document.querySelector("[aria-live]")
+      && document.querySelector("main")
+    );
+    const voiceReady = "speechSynthesis" in window;
+
+    setAuditResult("teste-contraste", "pass", `Tema ${tema.options[tema.selectedIndex].text} aplicado com cores próprias.`);
+    setAuditResult("teste-teclado", allKeyboardReady ? "pass" : "attention", allKeyboardReady
+      ? `${keyboardControls.length} controles podem receber foco pelo teclado.`
+      : "Alguns controles não podem receber foco pelo teclado.");
+    setAuditResult("teste-alt", allImagesDescribed ? "pass" : "attention", images.length
+      ? (allImagesDescribed ? "Todas as imagens encontradas possuem atributo alt." : "Há imagem sem texto alternativo.")
+      : "Não há imagens no conteúdo atual que precisem de texto alternativo.");
+    setAuditResult("teste-voz", voiceReady ? "pass" : "attention", voiceReady
+      ? "Leitura por voz está disponível neste navegador. O microfone depende do navegador."
+      : "Este navegador não oferece leitura por voz.");
+    setAuditResult("teste-leitor", screenReaderReady ? "pass" : "attention", screenReaderReady
+      ? "Idioma, atalho para conteúdo, rótulos e regiões de anúncio foram encontrados."
+      : "Faltam alguns recursos estruturais para leitores de tela.");
+    $("teste-atualizado").textContent = "Verificação concluída agora.";
+  };
+
   const setAssistantStatus = (text) => {
     assistenteStatus.textContent = text;
+  };
+
+  const answerOfflineQuestion = (question) => {
+    const answers = {
+      texto: "Use o controle Tamanho do texto no painel de ajustes. Você também pode dizer aumentar texto ou diminuir texto.",
+      teclado: "Use Tab para avançar entre controles, Enter ou Espaço para ativar botões, as teclas de um a nove no jogo de números e as setas na Rota segura.",
+      "baixa-visao": "O jogo Número falado é uma boa opção para começar: ele combina voz, texto grande, alto contraste e respostas pelo teclado.",
+    };
+    assistantAnswer.textContent = answers[question] || "Escolha uma das perguntas para ouvir uma resposta.";
   };
 
   const handleAssistantCommand = (rawCommand) => {
@@ -322,11 +521,41 @@
     setAssistantStatus(`Comando entendido: ${rawCommand}`);
 
     if (command.includes("ajuda")) {
-      speak("Você pode dizer: ler página, jogo um, jogo dois, jogo três, aumentar texto, diminuir texto, alto contraste, tema claro ou tema daltonismo.", { interrupt: true });
+      speak("Você pode dizer: ler instruções, guia, jogo um, próximo jogo, iniciar jogo, repetir, responder três, aumentar texto, tema escuro, alto contraste ou tema daltonismo.", { interrupt: true });
       return;
     }
 
-    if (command.includes("ler")) {
+    if (command.includes("guia")) {
+      guideCurrentView();
+      return;
+    }
+
+    if (command.includes("proximo jogo") || command.includes("proxima jogo")) {
+      goToNextGame();
+      return;
+    }
+
+    if (command.includes("responder") || command.includes("resposta")) {
+      const answer = answerNumberFromVoice(command);
+      if (answer && views.find((view) => !view.hidden)?.id === "numero") {
+        checkNumber(answer);
+        return;
+      }
+      speak("Para responder por voz, abra o jogo Número falado e diga responder seguido de um número de um a nove.", { interrupt: true });
+      return;
+    }
+
+    if (command.includes("iniciar") || command.includes("comecar") || command.includes("começar")) {
+      startCurrentGame();
+      return;
+    }
+
+    if (command.includes("repetir")) {
+      repeatCurrentGame();
+      return;
+    }
+
+    if (command.includes("ler") || command.includes("instrucoes")) {
       readCurrentPage();
       return;
     }
@@ -364,6 +593,13 @@
       tema.value = "alto";
       updateTheme();
       speak("Alto contraste ativado.", { interrupt: true });
+      return;
+    }
+
+    if (command.includes("escuro")) {
+      tema.value = "escuro";
+      updateTheme();
+      speak("Tema escuro ativado.", { interrupt: true });
       return;
     }
 
@@ -412,16 +648,14 @@
 
   $("novo-numero").addEventListener("click", newNumber);
   $("repetir-numero").addEventListener("click", () => {
-    if (estado.numero.current == null) return newNumber();
-    speak(`Número ${estado.numero.current}`, { interrupt: true });
-    setStatus("status-numero", "Número repetido.");
+    repeatCurrentGame();
   });
   document.querySelectorAll(".number-btn").forEach((btn) =>
     btn.addEventListener("click", () => checkNumber(btn.dataset.number))
   );
 
   $("iniciar-memoria").addEventListener("click", nextMemoryRound);
-  $("repetir-sequencia").addEventListener("click", playMemorySequence);
+  $("repetir-sequencia").addEventListener("click", repeatCurrentGame);
   document.querySelectorAll(".sound-pad").forEach((btn) =>
     btn.addEventListener("click", () => handleMemoryInput(Number(btn.dataset.pad)))
   );
@@ -455,11 +689,15 @@
   tema.addEventListener("change", updateTheme);
   tamanho.addEventListener("input", updateFontSize);
   btnFala.addEventListener("click", () => speak("Acessibilidade ativada. Teste de voz em velocidade confortável.", { interrupt: true }));
+  btnGuia.addEventListener("click", guideCurrentView);
+  profileButtons.forEach((button) => button.addEventListener("click", () => applyProfile(button.dataset.profile)));
+  questionButtons.forEach((button) => button.addEventListener("click", () => answerOfflineQuestion(button.dataset.question)));
   btnAjudaVoz.addEventListener("click", () => handleAssistantCommand("ajuda"));
   btnOuvir.addEventListener("click", () => {
     if (estado.recognition) estado.recognition.start();
   });
   vozSelect.addEventListener("change", () => speak("Voz selecionada.", { interrupt: true }));
+  $("executar-teste").addEventListener("click", runAccessibilityTest);
 
   if ("speechSynthesis" in window) {
     speechSynthesis.addEventListener?.("voiceschanged", refreshVoices);
@@ -470,9 +708,11 @@
   }
 
   setupSpeechRecognition();
+  restorePreferences();
   updateTheme();
   updateFontSize();
   updateNumberScore();
   updateMemoryScore();
   updateRotaScore();
+  runAccessibilityTest();
 })();

@@ -8,6 +8,7 @@
       name="description"
       content="Site local com três jogos acessíveis para pessoas cegas, com baixa visão e daltônicas."
     >
+    <link rel="icon" href="data:,">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -28,8 +29,9 @@
         <div class="control-row">
           <label for="tema">Tema visual</label>
           <select id="tema">
-            <option value="alto">Alto contraste</option>
             <option value="claro" selected>Claro com contraste</option>
+            <option value="escuro">Escuro</option>
+            <option value="alto">Alto contraste</option>
             <option value="protanopia">Amigável para daltonismo</option>
           </select>
         </div>
@@ -44,21 +46,44 @@
           </select>
         </div>
         <button type="button" id="btn-fala">Ativar ou testar voz</button>
+        <button type="button" id="btn-guia">Ouvir guia desta tela</button>
+        <section class="profile-panel" aria-labelledby="perfis-titulo">
+          <h3 id="perfis-titulo">Perfis rápidos</h3>
+          <p id="perfil-status">Escolha um perfil para ajustar o site de uma vez.</p>
+          <div class="profile-grid">
+            <button type="button" class="profile-btn" data-profile="baixa-visao" aria-pressed="false">Baixa visão</button>
+            <button type="button" class="profile-btn" data-profile="daltonismo" aria-pressed="false">Daltonismo</button>
+            <button type="button" class="profile-btn" data-profile="leitor" aria-pressed="false">Leitor de tela</button>
+            <button type="button" class="profile-btn" data-profile="movimento" aria-pressed="false">Pouco movimento</button>
+          </div>
+        </section>
         <div class="assistant-panel" aria-labelledby="assistente-titulo">
           <h3 id="assistente-titulo">Assistente por voz</h3>
           <p id="assistente-status" role="status" aria-live="polite">
-            Diga ajuda, ler página, jogo um, aumentar texto ou alto contraste.
+            Diga ajuda, ler instruções, iniciar jogo, repetir, responder três ou próximo jogo.
           </p>
           <div class="assistant-actions">
             <button type="button" id="btn-ouvir">Falar comando</button>
             <button type="button" id="btn-ajuda-voz">Ouvir ajuda</button>
           </div>
         </div>
+        <section class="offline-assistant" aria-labelledby="assistente-offline-titulo">
+          <h3 id="assistente-offline-titulo">Assistente de acessibilidade</h3>
+          <p>Escolha uma pergunta para receber uma resposta rápida, sem internet.</p>
+          <div class="question-list">
+            <button type="button" data-question="texto">Como aumento o texto?</button>
+            <button type="button" data-question="teclado">Como jogo por teclado?</button>
+            <button type="button" data-question="baixa-visao">Qual jogo é melhor para baixa visão?</button>
+          </div>
+          <p id="assistente-resposta" class="assistant-answer" role="status" aria-live="polite">
+            A resposta aparecerá aqui.
+          </p>
+        </section>
       </section>
     </header>
 
     <main id="conteudo" class="layout">
-      <nav class="tabs" aria-label="Escolha um jogo">
+      <nav class="tabs" aria-label="Navegação principal">
         <button class="tab is-active" type="button" data-view="numero" aria-controls="numero" aria-selected="true">
           Jogo 1
         </button>
@@ -67,6 +92,12 @@
         </button>
         <button class="tab" type="button" data-view="orientacao" aria-controls="orientacao" aria-selected="false">
           Jogo 3
+        </button>
+        <button class="tab" type="button" data-view="acessibilidade" aria-controls="acessibilidade" aria-selected="false">
+          Acessibilidade
+        </button>
+        <button class="tab" type="button" data-view="apresentacao" aria-controls="apresentacao" aria-selected="false">
+          Apresentação
         </button>
       </nav>
 
@@ -155,6 +186,60 @@
 
         <div class="status-box" role="status" aria-live="assertive" id="status-rota">
           Pressione nova direção para começar.
+        </div>
+      </section>
+
+      <section id="acessibilidade" class="view" aria-labelledby="acessibilidade-titulo" hidden>
+        <div class="section-head">
+          <p class="eyebrow">Ferramentas</p>
+          <h2 id="acessibilidade-titulo" tabindex="-1">Teste de acessibilidade</h2>
+          <p>
+            Faça uma verificação rápida dos recursos disponíveis nesta página.
+            O resultado muda de acordo com o navegador e com as suas configurações.
+          </p>
+        </div>
+
+        <div class="game-bar">
+          <button type="button" id="executar-teste">Executar teste agora</button>
+          <p id="teste-atualizado">Ainda não executado.</p>
+        </div>
+
+        <ul class="audit-list" aria-label="Resultados do teste de acessibilidade">
+          <li id="teste-contraste"><span class="audit-status">Não testado</span><strong>Contraste e tema</strong><span>O tema selecionado possui cores dedicadas.</span></li>
+          <li id="teste-teclado"><span class="audit-status">Não testado</span><strong>Navegação por teclado</strong><span>Botões e controles devem permanecer acessíveis pela tecla Tab.</span></li>
+          <li id="teste-alt"><span class="audit-status">Não testado</span><strong>Texto alternativo</strong><span>Imagens encontradas na página precisam ter descrição.</span></li>
+          <li id="teste-voz"><span class="audit-status">Não testado</span><strong>Comandos e leitura por voz</strong><span>O navegador pode ou não oferecer as APIs de voz.</span></li>
+          <li id="teste-leitor"><span class="audit-status">Não testado</span><strong>Leitor de tela</strong><span>A página usa idioma, foco, rótulos e regiões de anúncio.</span></li>
+        </ul>
+      </section>
+
+      <section id="apresentacao" class="view" aria-labelledby="apresentacao-titulo" hidden>
+        <div class="section-head">
+          <p class="eyebrow">Sobre o projeto</p>
+          <h2 id="apresentacao-titulo" tabindex="-1">IncluiPlay em apresentação</h2>
+          <p>
+            Uma experiência de jogos curtos para praticar atenção, memória e
+            orientação sem depender apenas da visão ou da cor.
+          </p>
+        </div>
+
+        <div class="presentation-grid">
+          <article>
+            <h3>Para quem é</h3>
+            <p>Pessoas cegas, com baixa visão, daltonismo ou que preferem interações por áudio e teclado.</p>
+          </article>
+          <article>
+            <h3>O que foi usado</h3>
+            <p>HTML semântico, foco visível, anúncios para leitores de tela, temas, texto ajustável, teclado, voz e sons.</p>
+          </article>
+          <article>
+            <h3>Os três jogos</h3>
+            <p>Número falado trabalha atenção; Memória sonora trabalha sequência; Rota segura trabalha direção.</p>
+          </article>
+          <article>
+            <h3>Uso offline</h3>
+            <p>O assistente de acessibilidade funciona com respostas prontas, sem enviar perguntas para nenhum serviço externo.</p>
+          </article>
         </div>
       </section>
     </main>
