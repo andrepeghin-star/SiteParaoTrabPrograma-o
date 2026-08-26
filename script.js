@@ -24,15 +24,35 @@
     recognition: null,
   };
 
+  // --- SISTEMA DE SOM (WEB AUDIO API) ---
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const playTone = (frequency, type, durationMs) => {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = frequency;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + (durationMs / 1000));
+    osc.stop(audioCtx.currentTime + (durationMs / 1000));
+  };
+  
+  const sonsMemoria = [
+    { freq: 261.6, tipo: "triangle" }, // 1 - Grave
+    { freq: 329.6, tipo: "square" },   // 2 - Médio
+    { freq: 392.0, tipo: "sine" },     // 3 - Agudo
+    { freq: 523.2, tipo: "sawtooth" }  // 4 - Eco
+  ];
+
   const $ = (id) => document.getElementById(id);
   const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  const gameViews = ["numero", "memoria", "orientacao"];
-  const supportedThemes = ["claro", "escuro", "alto", "protanopia"];
 
   const refreshVoices = () => {
     if (!("speechSynthesis" in window)) {
-      if (vozSelect) vozSelect.innerHTML = '<option value="">Voz não suportada neste navegador</option>';
+      if (vozSelect) vozSelect.innerHTML = '<option value="">Voz não suportada</option>';
       if (btnFala) btnFala.disabled = true;
       return;
     }
@@ -103,13 +123,11 @@
   const updateTheme = () => {
     if (!tema) return;
     document.body.dataset.theme = tema.value;
-    localStorage.setItem("incluiPlay_theme", tema.value);
   };
 
   const updateFontSize = () => {
     if (!tamanho) return;
     document.documentElement.style.fontSize = `${tamanho.value}px`;
-    localStorage.setItem("incluiPlay_fontSize", tamanho.value);
   };
 
   const setProfileButtonState = (profile) => {
@@ -165,7 +183,7 @@
   // --- JOGO 1 ---
   const newNumber = () => {
     estado.numero.current = randomInt(1, 9);
-    setStatus("status-numero", "Novo número falado. Escolha uma opção.");
+    setStatus("status-numero", "Novo número falado.");
     speak(`Número ${estado.numero.current}`, { interrupt: true });
   };
 
@@ -174,32 +192,38 @@
       newNumber();
       return;
     }
-
     const ok = Number(value) === estado.numero.current;
     if (ok) {
       estado.numero.hits += 1;
-      setStatus("status-numero", `Correto! O número era ${estado.numero.current}.`, "correct");
-      speak(`Correto. O número era ${estado.numero.current}.`);
+      setStatus("status-numero", `Correto!`, "correct");
+      speak(`Correto. Era ${estado.numero.current}.`);
     } else {
       estado.numero.misses += 1;
-      setStatus("status-numero", `Incorreto. O número era ${estado.numero.current}.`, "wrong");
-      speak(`Errado. O número era ${estado.numero.current}.`);
+      setStatus("status-numero", `Incorreto.`, "wrong");
+      speak(`Errado. Era ${estado.numero.current}.`);
     }
-
     $("placar-numero").textContent = `Acertos: ${estado.numero.hits}. Erros: ${estado.numero.misses}.`;
     estado.numero.current = null;
   };
 
-  // --- JOGO 2 ---
+  // --- JOGO 2 (MEMÓRIA COM SOM E VOZ CORRIGIDA) ---
   const playSequence = async () => {
     if (estado.memoria.sequence.length === 0) return;
     estado.memoria.accepting = false;
     setStatus("status-memoria", "Ouça a sequência...");
+    
+    await wait(400); // Pausa antes de começar a tocar
+    
     for (let i = 0; i < estado.memoria.sequence.length; i++) {
       const padIndex = estado.memoria.sequence[i];
-      await speak(`${padIndex + 1}`, { interrupt: true });
-      await wait(800);
+      const som = sonsMemoria[padIndex];
+      
+      playTone(som.freq, som.tipo, 400);
+      speak(`${padIndex + 1}`, { interrupt: false }); // Não interrompe a voz anterior
+      
+      await wait(1000); // Dá tempo para o som e a voz terminarem antes do próximo
     }
+    
     setStatus("status-memoria", "Sua vez! Repita a sequência.");
     estado.memoria.input = [];
     estado.memoria.accepting = true;
@@ -219,11 +243,13 @@
     estado.memoria.input.push(padIndex);
     const currentStep = estado.memoria.input.length - 1;
 
+    const som = sonsMemoria[padIndex];
+    playTone(som.freq, som.tipo, 300);
     speak(`${padIndex + 1}`, { interrupt: true });
 
     if (estado.memoria.input[currentStep] !== estado.memoria.sequence[currentStep]) {
       setStatus("status-memoria", `Incorreto. Fim de jogo na rodada ${estado.memoria.round}.`, "wrong");
-      speak(`Errado. Fim de jogo.`);
+      speak(`Errado. Fim de jogo.`, { interrupt: false });
       estado.memoria.accepting = false;
       return;
     }
@@ -236,10 +262,9 @@
       }
       if ($("placar-memoria")) $("placar-memoria").textContent = `Rodada ${estado.memoria.round}. Melhor resultado: ${estado.memoria.best}.`;
       setStatus("status-memoria", "Correto! Preparando próxima sequência...", "correct");
-      speak(`Correto!`);
       
       estado.memoria.sequence.push(randomInt(0, 3));
-      setTimeout(playSequence, 2000);
+      setTimeout(playSequence, 1500);
     }
   };
 
@@ -273,7 +298,7 @@
     setTimeout(novaRota, 1500);
   };
 
-  // --- TESTES DE ACESSIBILIDADE ---
+  // --- TESTES E OFFLINE ---
   const runAccessibilityTest = () => {
     try {
       const keyboardControls = Array.from(document.querySelectorAll("button, select, input"));
@@ -295,15 +320,15 @@
         if (desc) desc.textContent = text;
       };
 
-      setAudit("teste-contraste", true, `Tema ${themeText} aplicado com sucesso.`);
-      setAudit("teste-teclado", allKeyboardReady, `${keyboardControls.length} controles navegáveis via teclado.`);
-      setAudit("teste-alt", allImagesDescribed, images.length ? "Imagens com atributo alt." : "Sem imagens pendentes.");
-      setAudit("teste-voz", voiceReady, voiceReady ? "Síntese de voz suportada." : "Sem suporte a voz neste navegador.");
-      setAudit("teste-leitor", screenReaderReady, "Estrutura semântica configurada.");
+      setAudit("teste-contraste", true, `Tema ${themeText} aplicado.`);
+      setAudit("teste-teclado", allKeyboardReady, `${keyboardControls.length} controles via teclado.`);
+      setAudit("teste-alt", allImagesDescribed, "Sem imagens pendentes.");
+      setAudit("teste-voz", voiceReady, voiceReady ? "Voz suportada." : "Sem suporte a voz.");
+      setAudit("teste-leitor", screenReaderReady, "Estrutura configurada.");
 
       if ($("teste-atualizado")) $("teste-atualizado").textContent = "Verificação concluída.";
     } catch (e) {
-      console.warn("Aviso ao executar teste de acessibilidade:", e);
+      console.warn("Erro no teste:", e);
     }
   };
 
@@ -318,7 +343,7 @@
     speak(text, { interrupt: true });
   };
 
-  // --- EVENT LISTENERS GERAIS ---
+  // --- EVENTOS ---
   tabs.forEach((tab) => tab.addEventListener("click", () => activateTab(tab.dataset.view)));
   
   if ($("novo-numero")) $("novo-numero").addEventListener("click", newNumber);
@@ -343,18 +368,17 @@
 
   if (tema) tema.addEventListener("change", updateTheme);
   if (tamanho) tamanho.addEventListener("input", updateFontSize);
-  if (btnFala) btnFala.addEventListener("click", () => speak("Acessibilidade e testes de voz ativos.", { interrupt: true }));
+  if (btnFala) btnFala.addEventListener("click", () => speak("Acessibilidade ativa.", { interrupt: true }));
   
   profileButtons.forEach((btn) => btn.addEventListener("click", () => applyProfile(btn.dataset.profile)));
   questionButtons.forEach((btn) => btn.addEventListener("click", () => answerOfflineQuestion(btn.dataset.question)));
   if ($("executar-teste")) $("executar-teste").addEventListener("click", runAccessibilityTest);
 
-  // --- INICIALIZAÇÃO ---
+  // --- INIT ---
   if ("speechSynthesis" in window) {
     speechSynthesis.onvoiceschanged = refreshVoices;
     refreshVoices();
   }
-
   updateTheme();
   updateFontSize();
   runAccessibilityTest();
